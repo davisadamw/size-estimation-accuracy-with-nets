@@ -84,8 +84,15 @@ sample_summary <- function(run, size, source_data = nets_size_2013, summary_col 
 
 # run 100 tests per sample size, every 5% of population
 sample_results <- crossing(run = 1:100, 
-                           size = sum(nets_size_2013$Emp13) * seq(0.005, 0.20, 0.005)) %>% 
+                           size = sum(nets_size_2013$Emp13) * c(0.001, 0.0025, seq(0.005, 0.20, 0.005))) %>% 
   pmap_dfr(sample_summary, weight = Emp13)
+
+sr_2 <- crossing(run = 1:100,
+                 size = 2000/6344 * sum(nets_size_2013$Emp13)) %>% 
+  pmap_dfr(sample_summary, weight = Emp13)
+
+sr0 <- sample_results
+sample_results <- bind_rows(sample_results, sr_2)
 
 # relative sample plots (2)
 sample_results %>% 
@@ -101,6 +108,7 @@ sample_results %>%
   labs(x = 'Sample Fraction (people in sample / population)',
        y = 'Total Locations in Sample') +
   theme_bw()
+ggsave('locations_in_data.png')
 
 sample_results %>% 
   mutate(sample_frac = sample_size / sum(nets_size_2013$Emp13)) %>% 
@@ -115,6 +123,7 @@ sample_results %>%
   labs(x = 'Sample Fraction (people in sample / population)',
        y = 'Total Employees of Locations in Sample') +
   theme_bw()
+ggsave('employees_in_data.png')
 
 # mean size plot
 sample_results %>% 
@@ -133,6 +142,7 @@ sample_results %>%
   labs(x = 'Sample Fraction (people in sample / population)',
        y = 'Estimated mean location size') +
   theme_bw()
+ggsave('mean_size.png')
 
 # chao and zelterman plots
 sample_results %>% 
@@ -152,7 +162,7 @@ sample_results %>%
   labs(x = 'Sample Fraction (people in sample / population)',
        y = 'Estimated total number of locations') +
   theme_bw()
-
+ggsave('chao_zelt.png')
 # takeaways: 
 # + employees (proxy for chargers) gets pretty good around 5% sample
 # + maybe interesting story since it IDs failure locs for chao and zelterman

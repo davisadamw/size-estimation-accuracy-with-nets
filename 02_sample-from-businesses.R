@@ -3,8 +3,8 @@ library(tidyverse)
 # load data and remove really weird locations (size <= 2 or size >= 10k)
 nets_size_2013 <- read_rds('Data/CA_business_sizes_2013.rds') %>% 
   filter(between(Emp13, 3, 10000)) %>% 
-  # just to make everything easier, let's just get a 10% sample of businesses
-  sample_frac(0.1)
+  # just to make everything easier, let's just get a 5% sample of businesses
+  sample_frac(0.05)
 
 # some baseline stats ... average business size and size of business for average emp
 nets_size_2013 %>% 
@@ -84,15 +84,11 @@ sample_summary <- function(run, size, source_data = nets_size_2013, summary_col 
 
 # run 100 tests per sample size, every 5% of population
 sample_results <- crossing(run = 1:100, 
-                           size = sum(nets_size_2013$Emp13) * c(0.001, 0.0025, seq(0.005, 0.20, 0.005))) %>% 
+                           size = sum(nets_size_2013$Emp13) * c(0.001, 0.0025, seq(0.005, 0.30, 0.005))) %>% 
   pmap_dfr(sample_summary, weight = Emp13)
 
-sr_2 <- crossing(run = 1:100,
-                 size = 2000/6344 * sum(nets_size_2013$Emp13)) %>% 
-  pmap_dfr(sample_summary, weight = Emp13)
-
-sr0 <- sample_results
-sample_results <- bind_rows(sample_results, sr_2)
+sample_results %>% 
+  write_rds('Data/CA_business_subsamples.rds', compress = 'gz')
 
 # relative sample plots (2)
 sample_results %>% 
